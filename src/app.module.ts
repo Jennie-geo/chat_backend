@@ -9,6 +9,7 @@ import { Connection } from 'mongoose';
 import { CommentModule } from './comment/comment.module';
 import Joi from 'joi';
 import 'dotenv/config';
+import { NODE_ENV } from './app/constants/app.constant';
 
 @Module({
   imports: [
@@ -16,9 +17,10 @@ import 'dotenv/config';
       isGlobal: true,
       validationSchema: Joi.object({
         NODE_ENV: Joi.string()
-          .valid('development', 'production')
-          .default('development'),
-        PORT: Joi.number().port().default(3002),
+          .valid(NODE_ENV.DEVELOPMENT, NODE_ENV.PRODUCTION)
+          .default(NODE_ENV.DEVELOPMENT),
+        PORT: Joi.number().port().required().default(3002),
+        DATABASE_URL: Joi.string().required,
       }),
       validationOptions: {
         allowUnknown: false,
