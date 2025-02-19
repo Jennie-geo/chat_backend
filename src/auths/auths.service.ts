@@ -1,17 +1,28 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { CreateAuthDto } from './dto/sigup-auth.dto';
 import * as bcrypt from 'bcrypt';
-// import { UpdateAuthDto } from './dto/update-auth.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from 'src/user/entities/user.entity';
-import { defaultTo } from 'lodash';
+import { defaultTo, isNil } from 'lodash';
 import httpStatus from 'http-status';
 import { ServiceResponseJson as serviceResponseJson } from '../Helpers/Response';
+import { LoginAuthDto } from './dto/login-auth.dto';
+// import { UtilsConfig } from 'src/Utils/generatePasswordToken';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthsService {
-  constructor(@InjectModel('User') private readonly userModel: Model<User>) {}
+  constructor(
+    @InjectModel('User') private readonly userModel: Model<User>,
+    // private readonly utilsConfig: UtilsConfig,
+    private readonly jwtService: JwtService,
+  ) {}
   async create(createAuthDto: CreateAuthDto) {
     try {
       const { email, password } = createAuthDto;
@@ -27,6 +38,7 @@ export class AuthsService {
       const user = await this.userModel.create({
         email,
         password: hashPassword,
+        isActive: true,
       });
       return {
         ...serviceResponseJson,
@@ -56,7 +68,53 @@ export class AuthsService {
     }
   }
 
-  login() {}
+  async login(loginAuthDto: LoginAuthDto) {
+    try {
+      const { email, password } = loginAuthDto;
+
+      const user = await this.userModel.findOne({ email });
+      if (isNil(user)) {
+        throw new HttpException('Oops! user not found', HttpStatus.BAD_REQUEST);
+      }
+      const isPasswordValid = await bcrypt.compare(password!, user.password);
+      console.log(
+        ';;;isPassword',
+        isPasswordValid,
+        'isNil(isPasswordValid)',
+        !isNil(isPasswordValid),
+      );
+      if (!isPasswordValid) {
+        throw new UnauthorizedException();
+      }
+      console.log('user::::::', user);
+      // const token = await this.utilsConfig.generateToken(user);
+      const payload = { sub: user._id, username: user.email };
+      const accessToken = await this.jwtService.signAsync(payload);
+      return {
+        access_token: accessToken,
+      };
+
+      // return { access_token: token };
+    } catch (error) {
+      const statusCode =
+        defaultTo(
+          error?.response?.statusCode,
+          defaultTo(error?.response?.status, error?.status),
+        ) ?? httpStatus.INTERNAL_SERVER_ERROR;
+      return {
+        ...serviceResponseJson,
+        status: false,
+        statusCode:
+          statusCode === httpStatus.UNAUTHORIZED
+            ? httpStatus.BAD_REQUEST
+            : statusCode,
+        message:
+          error?.response?.data?.message ??
+          error?.message ??
+          'an error has occurred. kindly try again later.',
+      };
+    }
+  }
 
   logout() {}
 }

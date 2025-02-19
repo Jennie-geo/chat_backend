@@ -14,6 +14,8 @@ import { AuthsController } from './auths/auths.controller';
 import { AuthsService } from './auths/auths.service';
 import { AuthsModule } from './auths/auths.module';
 import { User, UserSchema } from './user/entities/user.entity';
+import { JwtService } from '@nestjs/jwt';
+console.log('process.env.JWT_SECRET:', process.env.JWT_SECRET);
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -24,6 +26,7 @@ import { User, UserSchema } from './user/entities/user.entity';
           .default(NODE_ENV.DEVELOPMENT),
         PORT: Joi.number().port().required().default(3002),
         DATABASE_URL: Joi.string().required(),
+        JWT_SECRET: Joi.string().required(),
       }),
       validationOptions: {
         allowUnknown: true,
@@ -53,6 +56,6 @@ import { User, UserSchema } from './user/entities/user.entity';
     AuthsModule,
   ],
   controllers: [AppController, AuthsController],
-  providers: [AppService, AuthsService],
+  providers: [AppService, AuthsService, JwtService],
 })
 export class AppModule {}
