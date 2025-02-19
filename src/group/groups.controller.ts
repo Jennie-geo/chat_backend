@@ -1,14 +1,22 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { ChannelsService } from './channels.service';
-import { CreateChannelDto } from './dto/create-channel.dto';
-import { UpdateChannelDto } from './dto/update-channel.dto';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
+import { ChannelsService } from './groups.service';
+import { CreateGroupDto } from './dto/create-group.dto';
+import { UpdateGroupDto } from './dto/update-group.dto';
 
 @Controller('channels')
 export class ChannelsController {
   constructor(private readonly channelsService: ChannelsService) {}
 
   @Post()
-  create(@Body() createChannelDto: CreateChannelDto) {
+  create(@Body() createChannelDto: CreateGroupDto) {
     return this.channelsService.create(createChannelDto);
   }
 
@@ -23,8 +31,8 @@ export class ChannelsController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateChannelDto: UpdateChannelDto) {
-    return this.channelsService.update(+id, updateChannelDto);
+  update(@Param('id') id: string, @Body() updateGroupDto: UpdateGroupDto) {
+    return this.channelsService.update(+id, updateGroupDto);
   }
 
   @Delete(':id')

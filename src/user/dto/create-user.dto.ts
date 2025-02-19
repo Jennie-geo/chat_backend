@@ -1,9 +1,9 @@
 import {
   IsBoolean,
   IsDate,
-  IsEmail,
   IsNotEmpty,
   IsString,
+  MaxLength,
 } from 'class-validator';
 
 export class CreateUserDto {
@@ -12,22 +12,15 @@ export class CreateUserDto {
   firstName: string;
 
   @IsString()
-  @IsNotEmpty()
   middleName: string;
 
   @IsString()
+  @IsNotEmpty()
   lastName: string;
 
   @IsString()
+  @MaxLength(8)
   userName: string;
-
-  @IsEmail()
-  @IsNotEmpty()
-  email: string;
-
-  @IsString()
-  @IsNotEmpty()
-  password: string;
 
   @IsString()
   avatar: string;

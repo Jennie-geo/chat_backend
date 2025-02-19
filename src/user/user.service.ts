@@ -1,14 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-auth.dto';
-import { UpdateUserDto } from './dto/update-auth.dto';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { defaultTo } from 'lodash';
 import httpStatus from 'http-status';
 import { ServiceResponseJson as serviceResponseJson } from '../Helpers/Response';
+import { User } from './entities/user.entity';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 
 @Injectable()
-export class AuthsService {
-  create(createUserDto: CreateUserDto) {
-    // return 'This action adds a new user';
+export class UsersService {
+  constructor(@InjectModel('User') private readonly userModel: Model<User>) {}
+
+  async create(createUserDto: CreateUserDto) {
     try {
       return {
         ...createUserDto,

@@ -1,6 +1,6 @@
 import { Prop } from '@nestjs/mongoose';
 import mongoose from 'mongoose';
-import { User } from 'src/auth/entities/auth.entity';
+import { User } from 'src/user/entities/user.entity';
 
 export class Comment {
   @Prop()

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { ChannelsService } from './channels.service';
-import { ChannelsController } from './channels.controller';
+import { ChannelsService } from './groups.service';
+import { ChannelsController } from './groups.controller';
 
 @Module({
   controllers: [ChannelsController],

@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { CreateChannelDto } from './dto/create-channel.dto';
-import { UpdateChannelDto } from './dto/update-channel.dto';
+import { CreateGroupDto } from './dto/create-group.dto';
+import { UpdateGroupDto } from './dto/update-group.dto';
 
 @Injectable()
 export class ChannelsService {
-  create(createChannelDto: CreateChannelDto) {
+  create(createGroupDto: CreateGroupDto) {
     return 'This action adds a new channel';
   }
 
@@ -16,7 +16,7 @@ export class ChannelsService {
     return `This action returns a #${id} channel`;
   }
 
-  update(id: number, updateChannelDto: UpdateChannelDto) {
+  update(id: number, updateGroupDto: UpdateGroupDto) {
     return `This action updates a #${id} channel`;
   }
 
