@@ -118,7 +118,6 @@ export class AuthsService {
 
   public async logout(req: any) {
     try {
-      await req.logout();
       return {
         ...serviceResponseJson,
         statusCode: httpStatus.OK,
