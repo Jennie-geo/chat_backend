@@ -26,7 +26,8 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
 
   @IsString()
   @IsIn(['online', 'offline'], {
-    message: 'Status must be either "online" or "offline".',
+    message:
+      'Status must either contain $constraint1 fields, but actual is $value',
   })
   status: string;
 
