@@ -6,7 +6,6 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { UsersModule } from './user/user.module';
 import { ChannelsModule } from './group/groups.module';
 import { Connection } from 'mongoose';
-import { CommentModule } from './comment/comment.module';
 import * as Joi from 'joi';
 import 'dotenv/config';
 import { NODE_ENV } from './app/constants/app.constant';
@@ -20,6 +19,7 @@ console.log('process.env.JWT_SECRET:', process.env.JWT_SECRET);
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      // envFilePath: '.env',
       validationSchema: Joi.object({
         NODE_ENV: Joi.string()
           .valid(NODE_ENV.DEVELOPMENT, NODE_ENV.PRODUCTION)
@@ -52,7 +52,6 @@ console.log('process.env.JWT_SECRET:', process.env.JWT_SECRET);
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     UsersModule,
     ChannelsModule,
-    CommentModule,
     AuthsModule,
   ],
   controllers: [AppController, AuthsController],

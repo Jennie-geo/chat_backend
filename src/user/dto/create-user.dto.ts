@@ -1,23 +1,6 @@
-import {
-  IsBoolean,
-  IsDate,
-  IsNotEmpty,
-  IsString,
-  MaxLength,
-} from 'class-validator';
+import { IsBoolean, IsDate, IsString, MaxLength } from 'class-validator';
 
 export class CreateUserDto {
-  @IsString()
-  @IsNotEmpty()
-  firstName: string;
-
-  @IsString()
-  middleName: string;
-
-  @IsString()
-  @IsNotEmpty()
-  lastName: string;
-
   @IsString()
   @MaxLength(8)
   userName: string;
@@ -31,8 +14,8 @@ export class CreateUserDto {
   @IsString()
   mobile: string;
 
-  @IsBoolean()
-  isActive: boolean;
+  // @IsBoolean()
+  // isActive: boolean;
 
   @IsBoolean()
   isDisabled: boolean;

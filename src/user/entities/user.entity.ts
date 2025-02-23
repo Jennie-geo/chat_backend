@@ -1,15 +1,9 @@
 import { Prop, Schema } from '@nestjs/mongoose';
-
+import { v4 as uuidv4 } from 'uuid';
 @Schema({ timestamps: true })
 export class User {
-  @Prop()
-  firstName: string;
-
-  @Prop()
-  middleName: string;
-
-  @Prop()
-  lastName: string;
+  @Prop({ default: uuidv4 })
+  _id: string;
 
   @Prop()
   userName: string;
@@ -29,8 +23,8 @@ export class User {
   @Prop()
   mobile: string;
 
-  @Prop()
-  isActive: boolean;
+  // @Prop()
+  // isActive: boolean;
 
   @Prop()
   isDisabled: boolean;
@@ -40,6 +34,10 @@ export class User {
 
   @Prop()
   lastLogin: Date;
+
+  createdAt: Date;
+
+  updatedAt: Date;
 }
 
 import { SchemaFactory } from '@nestjs/mongoose';

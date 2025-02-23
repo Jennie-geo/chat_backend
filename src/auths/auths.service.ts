@@ -15,13 +15,13 @@ import { ServiceResponseJson as serviceResponseJson } from '../Helpers/Response'
 import { LoginAuthDto } from './dto/login-auth.dto';
 // import { UtilsConfig } from 'src/Utils/generatePasswordToken';
 import { JwtService } from '@nestjs/jwt';
+import { jwtConstants } from './constant';
 
 @Injectable()
 export class AuthsService {
   constructor(
     @InjectModel('User') private readonly userModel: Model<User>,
-    // private readonly utilsConfig: UtilsConfig,
-    private readonly jwtService: JwtService,
+    private jwtService: JwtService,
   ) {}
   async create(createAuthDto: CreateAuthDto) {
     try {
@@ -38,7 +38,6 @@ export class AuthsService {
       const user = await this.userModel.create({
         email,
         password: hashPassword,
-        isActive: true,
       });
       return {
         ...serviceResponseJson,
@@ -77,24 +76,25 @@ export class AuthsService {
         throw new HttpException('Oops! user not found', HttpStatus.BAD_REQUEST);
       }
       const isPasswordValid = await bcrypt.compare(password!, user.password);
-      console.log(
-        ';;;isPassword',
-        isPasswordValid,
-        'isNil(isPasswordValid)',
-        !isNil(isPasswordValid),
-      );
       if (!isPasswordValid) {
         throw new UnauthorizedException();
       }
-      console.log('user::::::', user);
-      // const token = await this.utilsConfig.generateToken(user);
-      const payload = { sub: user._id, username: user.email };
-      const accessToken = await this.jwtService.signAsync(payload);
+      const payload = { sub: user._id, email: user.email };
+
+      const accessToken = this.jwtService.sign(payload, {
+        secret: jwtConstants.secret,
+        expiresIn: jwtConstants.expiresIn,
+      });
+      user.lastLogin = user.updatedAt;
+      await user.save();
       return {
+        ...serviceResponseJson,
+        statusCode: httpStatus.OK,
+        status: true,
+        message: 'Logged in successfully',
+        data: null,
         access_token: accessToken,
       };
-
-      // return { access_token: token };
     } catch (error) {
       const statusCode =
         defaultTo(
@@ -116,5 +116,34 @@ export class AuthsService {
     }
   }
 
-  logout() {}
+  public async logout(req: any) {
+    try {
+      await req.logout();
+      return {
+        ...serviceResponseJson,
+        statusCode: httpStatus.OK,
+        status: true,
+        message: 'You have successfully logged out.',
+        data: null,
+      };
+    } catch (error) {
+      const statusCode =
+        defaultTo(
+          error?.response?.statusCode,
+          defaultTo(error?.response?.status, error?.status),
+        ) ?? httpStatus.INTERNAL_SERVER_ERROR;
+      return {
+        ...serviceResponseJson,
+        status: false,
+        statusCode:
+          statusCode === httpStatus.UNAUTHORIZED
+            ? httpStatus.BAD_REQUEST
+            : statusCode,
+        message:
+          error?.response?.data?.message ??
+          error?.message ??
+          'an error has occurred. kindly try again later.',
+      };
+    }
+  }
 }
