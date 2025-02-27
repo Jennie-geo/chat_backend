@@ -92,8 +92,7 @@ export class AuthsService {
         statusCode: httpStatus.OK,
         status: true,
         message: 'Logged in successfully',
-        data: null,
-        access_token: accessToken,
+        data: accessToken,
       };
     } catch (error) {
       const statusCode =
@@ -118,6 +117,7 @@ export class AuthsService {
 
   public async logout(req: any) {
     try {
+      console.log(req);
       return {
         ...serviceResponseJson,
         statusCode: httpStatus.OK,

@@ -1,5 +1,6 @@
 import { Prop, Schema } from '@nestjs/mongoose';
 import { v4 as uuidv4 } from 'uuid';
+import { SchemaFactory } from '@nestjs/mongoose';
 @Schema({ timestamps: true })
 export class User {
   @Prop({ default: uuidv4 })
@@ -40,5 +41,5 @@ export class User {
   updatedAt: Date;
 }
 
-import { SchemaFactory } from '@nestjs/mongoose';
+// import { SchemaFactory } from '@nestjs/mongoose';
 export const UserSchema = SchemaFactory.createForClass(User);

@@ -4,7 +4,7 @@ import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UsersModule } from './user/user.module';
-import { ChannelsModule } from './group/groups.module';
+import { GroupsModule } from './group/groups.module';
 import { Connection } from 'mongoose';
 import * as Joi from 'joi';
 import 'dotenv/config';
@@ -14,7 +14,8 @@ import { AuthsService } from './auths/auths.service';
 import { AuthsModule } from './auths/auths.module';
 import { User, UserSchema } from './user/entities/user.entity';
 import { JwtService } from '@nestjs/jwt';
-console.log('process.env.JWT_SECRET:', process.env.JWT_SECRET);
+import { ChatGateway } from './chat/chat.gateway';
+import { EventModule } from './chat/chat.gateway.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -51,10 +52,11 @@ console.log('process.env.JWT_SECRET:', process.env.JWT_SECRET);
     ),
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     UsersModule,
-    ChannelsModule,
+    GroupsModule,
     AuthsModule,
+    EventModule,
   ],
   controllers: [AppController, AuthsController],
-  providers: [AppService, AuthsService, JwtService],
+  providers: [AppService, AuthsService, JwtService, ChatGateway],
 })
 export class AppModule {}

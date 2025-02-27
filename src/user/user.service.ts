@@ -5,7 +5,6 @@ import {
   Request,
   UnauthorizedException,
 } from '@nestjs/common';
-// import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { defaultTo, isEmpty, isNil } from 'lodash';
 import httpStatus from 'http-status';
@@ -57,13 +56,82 @@ export class UsersService {
     }
   }
 
-  findAll() {
-    return `This action returns all users`;
+  async searchUser(username: string): Promise<any> {
+    try {
+      let users;
+      if (username) {
+        users = await this.userModel
+          .find({ userName: new RegExp(username, 'i') })
+          .select(['-password', '-createdAt', '-updatedAt'])
+          .exec();
+      } else {
+        users = await this.userModel
+          .find()
+          .select(['-password', '-createdAt', '-updatedAt'])
+          .exec();
+      }
+
+      return {
+        ...serviceResponseJson,
+        statusCode: httpStatus.OK,
+        status: true,
+        message: 'user received successfully',
+        data: users,
+      };
+    } catch (error) {
+      const statusCode =
+        defaultTo(
+          error?.response?.statusCode,
+          defaultTo(error?.response?.status, error?.status),
+        ) ?? httpStatus.INTERNAL_SERVER_ERROR;
+      return {
+        ...serviceResponseJson,
+        status: false,
+        statusCode:
+          statusCode === httpStatus.UNAUTHORIZED
+            ? httpStatus.BAD_REQUEST
+            : statusCode,
+        message:
+          error?.response?.data?.message ??
+          error?.message ??
+          'an error has occurred. kindly try again later.',
+      };
+    }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
-  }
+  // async chatWithUser(id: number): Promise<any> {
+  //   try {
+  //     const user = await this.userModel.findById(id);
+  //     if (isNil(user)) {
+  //       throw new UnauthorizedException();
+  //     }
+  //     return {
+  //       ...serviceResponseJson,
+  //       statusCode: httpStatus.OK,
+  //       status: true,
+  //       message: 'user profile updated successfully',
+  //       data: user,
+  //     };
+  //   } catch (error) {
+  //     const statusCode =
+  //       defaultTo(
+  //         error?.response?.statusCode,
+  //         defaultTo(error?.response?.status, error?.status),
+  //       ) ?? httpStatus.INTERNAL_SERVER_ERROR;
+  //     return {
+  //       ...serviceResponseJson,
+  //       status: false,
+  //       statusCode:
+  //         statusCode === httpStatus.UNAUTHORIZED
+  //           ? httpStatus.BAD_REQUEST
+  //           : statusCode,
+  //       message:
+  //         error?.response?.data?.message ??
+  //         error?.message ??
+  //         'an error has occurred. kindly try again later.',
+  //     };
+  //   }
+  // }
 
   async updateUserStatus(auth: any, updateUserDto: UpdateUserDto) {
     try {

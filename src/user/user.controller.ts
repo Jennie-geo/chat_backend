@@ -9,6 +9,7 @@ import {
   UseGuards,
   HttpException,
   Res,
+  Query,
 } from '@nestjs/common';
 import { UsersService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -19,6 +20,7 @@ import {
 } from 'src/Helpers/Response';
 import { includes, toString } from 'lodash';
 import { Response } from 'express';
+// import { SearchUserDto } from './dto/query.user.dto';
 
 @Controller('users/')
 export class UsersController {
@@ -66,14 +68,25 @@ export class UsersController {
     });
   }
 
-  @Get()
-  findAll() {
-    return this.authsService.findAll();
-  }
+  @Get('search')
+  async findOne(
+    @Query('username') username: string,
+    @Res() response: Response,
+  ) {
+    console.log('query', username);
+    const { status, message, statusCode, data } =
+      await this.authsService.searchUser(username);
+    if (includes(ServiceResponseStatusErrorArray, toString(status))) {
+      throw new HttpException(message, statusCode);
+    }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.authsService.findOne(+id);
+    return response.send({
+      ...responseJson,
+      status,
+      message,
+      data,
+      statusCode,
+    });
   }
 
   @Delete(':id')
