@@ -195,7 +195,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const { sub: userId } = await this.jwtService.verifyAsync(token, {
       secret: jwtConstants.secret,
     });
-    console.log(`👥 All rooms:`, this.server.sockets.adapter.rooms);
+    console.log(`All rooms:`, this.server.sockets.adapter.rooms);
     console.log('USERID IN CONNECTION', userId);
     if (userId) {
       this.onlineUsers.set(userId, socket.id);
