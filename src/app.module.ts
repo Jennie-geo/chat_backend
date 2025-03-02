@@ -16,6 +16,8 @@ import { User, UserSchema } from './user/entities/user.entity';
 import { JwtService } from '@nestjs/jwt';
 import { ChatGateway } from './chat/chat.gateway';
 import { EventModule } from './chat/chat.gateway.module';
+import { MessagesService } from './messages/messages.service';
+import { Message, GroupSchema } from './messages/entities/message.entity';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -50,13 +52,22 @@ import { EventModule } from './chat/chat.gateway.module';
         },
       },
     ),
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    MongooseModule.forFeature([
+      { name: User.name, schema: UserSchema },
+      { name: Message.name, schema: GroupSchema },
+    ]),
     UsersModule,
     GroupsModule,
     AuthsModule,
     EventModule,
   ],
   controllers: [AppController, AuthsController],
-  providers: [AppService, AuthsService, JwtService, ChatGateway],
+  providers: [
+    AppService,
+    AuthsService,
+    JwtService,
+    ChatGateway,
+    MessagesService,
+  ],
 })
 export class AppModule {}

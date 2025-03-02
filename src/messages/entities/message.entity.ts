@@ -1,33 +1,41 @@
-import { Prop, Schema } from '@nestjs/mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose from 'mongoose';
-import { User } from 'src/user/entities/user.entity';
+import { v4 as uuidv4 } from 'uuid';
 
 @Schema({ timestamps: true })
 export class Message {
+  @Prop({ default: uuidv4 })
+  _id: string;
+
   @Prop()
   content: string;
 
   @Prop()
   type: string; //documents, image, video, text
 
-  @Prop()
-  groupId: string; //chat and channel
+  @Prop({ type: String })
+  groupId: { type: mongoose.Schema.Types.ObjectId; ref: 'Group' }; //private and group
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User' })
-  sender: User;
+  @Prop({ type: String })
+  senderId: { type: mongoose.Schema.Types.ObjectId; ref: 'User' };
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User' })
-  recipient: User;
+  @Prop({ type: String })
+  recipientId: { type: mongoose.Schema.Types.ObjectId; ref: 'User' };
 
   @Prop()
   isDeleted: boolean;
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' })
-  comment: Comment;
+  // @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' })
+  // comment: Comment;
 
   @Prop()
   isRead: boolean;
 
-  @Prop()
-  meta: object;
+  @Prop({ type: mongoose.Schema.Types.Mixed })
+  meta: Record<string, any>;
+
+  createdAt: Date;
+
+  updatedAt: Date;
 }
+export const GroupSchema = SchemaFactory.createForClass(Message);

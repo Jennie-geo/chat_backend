@@ -87,14 +87,66 @@
 //   }
 // }
 
+// import {
+//   WebSocketGateway,
+//   WebSocketServer,
+//   SubscribeMessage,
+//   MessageBody,
+//   ConnectedSocket,
+// } from '@nestjs/websockets';
+// import { Server, Socket } from 'socket.io';
+// import { MessagesService } from 'src/messages/messages.service';
+
+// @WebSocketGateway({
+//   cors: {
+//     origin: 'http://localhost:3000', // Allow frontend origin
+//     credentials: true,
+//   },
+// })
+// export class ChatGateway {
+//   constructor(private messageService: MessagesService) {}
+//   @WebSocketServer()
+//   server: Server;
+
+//   @SubscribeMessage('sendMessage')
+//   async handleMessage(
+//     @MessageBody()
+//     data: { recipientId: string; message: string; senderId: string },
+//     @ConnectedSocket() client: Socket,
+//   ) {
+//     await this.messageService.createMessage(data);
+//     console.log(
+//       `Message received: Recipient: ${data.recipientId}, Message: ${data.message}, Sender: ${data.senderId}`,
+//     );
+//     // Emit message to recipient
+//     this.server.to(data.recipientId).emit('new_message', data);
+//   }
+
+//   handleConnection(client: Socket) {
+//     console.log(`Client connected: ${client.id}`);
+//   }
+
+//   handleDisconnect(client: Socket) {
+//     console.log(` Client disconnected: ${client.id}`);
+//   }
+// }
+
 import {
   WebSocketGateway,
   WebSocketServer,
   SubscribeMessage,
   MessageBody,
   ConnectedSocket,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { MessagesService } from 'src/messages/messages.service';
+import { JwtService } from '@nestjs/jwt';
+import { jwtConstants } from 'src/auths/constant';
+import { Message } from 'src/messages/entities/message.entity';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 
 @WebSocketGateway({
   cors: {
@@ -102,29 +154,82 @@ import { Server, Socket } from 'socket.io';
     credentials: true,
   },
 })
-export class ChatGateway {
+export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
+  private onlineUsers = new Map<string, string>();
+  constructor(
+    private messageService: MessagesService,
+    private jwtService: JwtService,
+    @InjectModel('Message') private messageModel: Model<Message>,
+  ) {}
 
   @SubscribeMessage('sendMessage')
-  handleMessage(
+  async handleMessage(
     @MessageBody()
     data: { recipientId: string; message: string; senderId: string },
-    @ConnectedSocket() client: Socket,
+    // @ConnectedSocket() client: Socket,
   ) {
-    // console.log('📩 Message received:', data);
-    console.log(
-      `📩 Message received: Recipient: ${data.recipientId}, Message: ${data.message}, Sender: ${data.senderId}`,
-    );
-    // Emit message to recipient
-    this.server.to(data.recipientId).emit('new_message', data);
+    const savedMessage = await this.messageService.createMessage(data);
+    console.log('SAVED MESSAGE', savedMessage);
+    const recipientSocketId = this.onlineUsers.get(data.recipientId);
+    // console.log('online sent message::::::', recipientSocketId, savedMessage);
+    const { message } = savedMessage;
+    if (!message) {
+      console.error(' Error: Invalid message object received:', message);
+      return;
+    }
+    // console.log('this is the message', message);
+    if (recipientSocketId) {
+      this.server.to(recipientSocketId).emit('new_message', message);
+    }
+    console.log(` Sending message to room: ${recipientSocketId}`);
+    console.log(`👥 All rooms available:`, this.server.sockets.adapter.rooms);
+    // console.log(
+    //   ` Message received: Recipient: ${data.recipientId}, Message: ${data.message}, Sender: ${data.senderId}`,
+    // );
   }
 
-  handleConnection(client: Socket) {
-    console.log(`✅ Client connected: ${client.id}`);
+  async handleConnection(@ConnectedSocket() socket: Socket) {
+    const token = socket.handshake.auth.token;
+    const { sub: userId } = await this.jwtService.verifyAsync(token, {
+      secret: jwtConstants.secret,
+    });
+    console.log(`👥 All rooms:`, this.server.sockets.adapter.rooms);
+    console.log('USERID IN CONNECTION', userId);
+    if (userId) {
+      this.onlineUsers.set(userId, socket.id);
+      socket.join(userId);
+
+      const messages = await this.messageModel.find({ recipientId: userId });
+      // console.log('CHECKING MESSAGE', messages);
+      socket.emit('load_previous_messages', messages);
+    }
+    //   this.onlineUsers.set(userId, socket.id);
+    //   this.server.emit('user-connected', { userId })
+    // }
+    console.log(` Client connected: ${socket.id}`);
   }
 
-  handleDisconnect(client: Socket) {
-    console.log(`❌ Client disconnected: ${client.id}`);
+  handleDisconnect(@ConnectedSocket() socket: Socket) {
+    const userId = [...this.onlineUsers.entries()].find(
+      ([, socketId]) => socketId === socket.id,
+    )?.[0];
+    console.log(`Client disconnected: ${socket.id}, userId ${userId}`);
+
+    if (userId) {
+      this.onlineUsers.delete(userId);
+      this.server.emit('user-disconnected', { userId });
+    }
+  }
+
+  // Handle typing indicator
+  @SubscribeMessage('typing')
+  handleTyping(@MessageBody() data: { sender: string; recipient: string }) {
+    const recipientSocketId = this.onlineUsers.get(data.recipient);
+    if (recipientSocketId) {
+      console.log('typing....', data.sender);
+      this.server.to(recipientSocketId).emit('typing', { sender: data.sender });
+    }
   }
 }
