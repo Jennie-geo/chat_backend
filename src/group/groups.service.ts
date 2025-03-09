@@ -1,6 +1,5 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { CreateGroupDto } from './dto/create-group.dto';
-import { UpdateGroupDto } from './dto/update-group.dto';
 import { defaultTo, isNil } from 'lodash';
 import httpStatus from 'http-status';
 import { ServiceResponseJson as serviceResponseJson } from '../Helpers/Response';
@@ -96,11 +95,60 @@ export class GroupsService {
     }
   }
 
-  // update(id: number, updateGroupDto: UpdateGroupDto) {
-  //   return `This action updates a #${(id, updateGroupDto)} channel`;
-  // }
+  async retrieveGroupMembers(_id: string) {
+    try {
+      const group = await this.groupModel.findById(_id).exec();
+      if (isNil(group)) {
+        throw new HttpException('group not found', httpStatus.BAD_REQUEST);
+      }
+      return {
+        ...serviceResponseJson,
+        statusCode: httpStatus.OK,
+        status: true,
+        message: 'group members retrieved successfully.',
+        data: group.members,
+      };
+    } catch (error) {
+      const statusCode =
+        defaultTo(
+          error?.response?.statusCode,
+          defaultTo(error?.response?.status, error?.status),
+        ) ?? httpStatus.INTERNAL_SERVER_ERROR;
+      return {
+        ...serviceResponseJson,
+        status: false,
+        statusCode:
+          statusCode === httpStatus.UNAUTHORIZED
+            ? httpStatus.BAD_REQUEST
+            : statusCode,
+        message:
+          error?.response?.data?.message ??
+          error?.message ??
+          'an error has occurred. kindly try again later.',
+      };
+    }
+  }
 
-  remove(id: number) {
-    return `This action removes a #${id} channel`;
+  searchForGroup() {
+    try {
+    } catch (error) {
+      const statusCode =
+        defaultTo(
+          error?.response?.statusCode,
+          defaultTo(error?.response?.status, error?.status),
+        ) ?? httpStatus.INTERNAL_SERVER_ERROR;
+      return {
+        ...serviceResponseJson,
+        status: false,
+        statusCode:
+          statusCode === httpStatus.UNAUTHORIZED
+            ? httpStatus.BAD_REQUEST
+            : statusCode,
+        message:
+          error?.response?.data?.message ??
+          error?.message ??
+          'an error has occurred. kindly try again later.',
+      };
+    }
   }
 }

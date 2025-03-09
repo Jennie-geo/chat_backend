@@ -3,9 +3,7 @@ import {
   Get,
   Post,
   Body,
-  // Patch,
   Param,
-  Delete,
   UseGuards,
   Request,
   Res,
@@ -15,7 +13,6 @@ import {
 } from '@nestjs/common';
 import { GroupsService } from './groups.service';
 import { CreateGroupDto } from './dto/create-group.dto';
-// import { UpdateGroupDto } from './dto/update-group.dto';
 import { AuthGuard } from 'src/auths/auth.guard';
 import { Response } from 'express';
 import { includes, toString } from 'lodash';
@@ -68,16 +65,28 @@ export class ChannelsController {
       message,
       data,
     });
-    // return this.groupsService.findOne(+id);
   }
 
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateGroupDto: UpdateGroupDto) {
-  //   return this.groupsService.update(+id, updateGroupDto);
-  // }
+  @UseGuards(AuthGuard)
+  @Get(':_id')
+  async groupMembers(@Param('_id') _id: string, @Res() response: Response) {
+    const { status, message, statusCode, data } =
+      await this.groupsService.retrieveGroupMembers(_id);
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.groupsService.remove(+id);
+    if (includes(ServiceResponseStatusErrorArray, toString(status))) {
+      throw new HttpException(message, statusCode);
+    }
+
+    return response.send({
+      ...responseJson,
+      status: statusCode,
+      message,
+      data,
+    });
+  }
+
+  @Get()
+  SearchGroup() {
+    return this.groupsService.searchForGroup();
   }
 }
