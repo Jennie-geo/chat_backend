@@ -30,7 +30,6 @@ export class MessagesService {
         message: savedMessage,
         data: null,
       };
-      // return savedMessage;
     } catch (error) {
       const statusCode =
         defaultTo(

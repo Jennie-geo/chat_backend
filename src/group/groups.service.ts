@@ -55,14 +55,14 @@ export class GroupsService {
     }
   }
 
-  async addGroupMember(id: string, request: any): Promise<any> {
+  async addGroupMember(_id: string, raw: any): Promise<any> {
     try {
-      const _id = request.body();
-      const user = await this.userModel.findById(_id).exec();
+      const { id } = raw.body;
+      const user = await this.userModel.findById({ _id: id }).exec();
       if (isNil(user)) {
         throw new HttpException('user does not exist', httpStatus.BAD_REQUEST);
       }
-      const group = await this.groupModel.findById(id).exec();
+      const group = await this.groupModel.findById(_id).exec();
       if (isNil(group)) {
         throw new HttpException('group not found', httpStatus.BAD_REQUEST);
       }
@@ -70,7 +70,7 @@ export class GroupsService {
       await group.save();
       return {
         ...serviceResponseJson,
-        statusCode: httpStatus.OK,
+        statusCode: httpStatus.CREATED,
         status: true,
         message: 'group members updated successfully.',
         data: null,
@@ -94,7 +94,6 @@ export class GroupsService {
           'an error has occurred. kindly try again later.',
       };
     }
-    return `This action returns a #${id} channel`;
   }
 
   // update(id: number, updateGroupDto: UpdateGroupDto) {

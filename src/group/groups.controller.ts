@@ -10,6 +10,8 @@ import {
   Request,
   Res,
   HttpException,
+  Req,
+  RawBodyRequest,
 } from '@nestjs/common';
 import { GroupsService } from './groups.service';
 import { CreateGroupDto } from './dto/create-group.dto';
@@ -47,14 +49,14 @@ export class ChannelsController {
     });
   }
   @UseGuards(AuthGuard)
-  @Get(':id')
+  @Post(':_id')
   async addGroupMember(
-    @Param('id') id: string,
-    @Request() request: Request,
+    @Param('_id') _id: string,
+    @Req() request: RawBodyRequest<Request>,
     @Res() response: Response,
   ) {
     const { status, message, statusCode, data } =
-      await this.groupsService.addGroupMember(id, request);
+      await this.groupsService.addGroupMember(_id, request);
 
     if (includes(ServiceResponseStatusErrorArray, toString(status))) {
       throw new HttpException(message, statusCode);
