@@ -36,22 +36,19 @@ import { Message, GroupSchema } from './messages/entities/message.entity';
         abortEarly: true,
       },
     }),
-    MongooseModule.forRoot(
-      'mongodb+srv://isintumejenny:SvsnSPlLK8OHRN3j@cluster0.8ljje.mongodb.net/',
-      {
-        onConnectionCreate: (connection: Connection) => {
-          connection.on('connected', () =>
-            console.log('Database successfully connected'),
-          );
-          connection.on('open', () => console.log('connection is fully open'));
-          connection.on('disconnected', () => console.log('disconnected'));
-          // connection.on('reconnected', () => console.log('reconnected'));
-          // connection.on('disconnecting', () => console.log('disconnecting'));
+    MongooseModule.forRoot('', {
+      onConnectionCreate: (connection: Connection) => {
+        connection.on('connected', () =>
+          console.log('Database successfully connected'),
+        );
+        connection.on('open', () => console.log('connection is fully open'));
+        connection.on('disconnected', () => console.log('disconnected'));
+        // connection.on('reconnected', () => console.log('reconnected'));
+        // connection.on('disconnecting', () => console.log('disconnecting'));
 
-          return connection;
-        },
+        return connection;
       },
-    ),
+    }),
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: Message.name, schema: GroupSchema },
