@@ -10,6 +10,7 @@ import {
   HttpException,
   Req,
   RawBodyRequest,
+  Query,
 } from '@nestjs/common';
 import { GroupsService } from './groups.service';
 import { CreateGroupDto } from './dto/create-group.dto';
@@ -85,8 +86,20 @@ export class ChannelsController {
     });
   }
 
-  @Get()
-  SearchGroup() {
-    return this.groupsService.searchForGroup();
+  @Get('group/search')
+  async SearchGroup(@Query('name') query: string, @Res() response: Response) {
+    const { status, message, statusCode, data } =
+      await this.groupsService.searchForGroup(query);
+
+    if (includes(ServiceResponseStatusErrorArray, toString(status))) {
+      throw new HttpException(message, statusCode);
+    }
+
+    return response.send({
+      ...responseJson,
+      status: statusCode,
+      message,
+      data,
+    });
   }
 }

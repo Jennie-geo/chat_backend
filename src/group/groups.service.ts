@@ -1,6 +1,6 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { CreateGroupDto } from './dto/create-group.dto';
-import { defaultTo, isNil } from 'lodash';
+import { defaultTo, isEmpty, isNil } from 'lodash';
 import httpStatus from 'http-status';
 import { ServiceResponseJson as serviceResponseJson } from '../Helpers/Response';
 import { Group } from 'src/group/entities/group.entity';
@@ -129,8 +129,34 @@ export class GroupsService {
     }
   }
 
-  searchForGroup() {
+  async searchForGroup(query: string) {
     try {
+      const groupName = query.toLowerCase();
+      //create atlas search index on mongodb atlas and the index name group here
+      const group = await this.groupModel.aggregate([
+        {
+          $search: {
+            index: 'group',
+            text: {
+              query: groupName,
+              path: 'name',
+              fuzzy: {},
+            },
+          },
+        },
+        { $limit: 10 },
+      ]);
+
+      if (isNil(group) || isEmpty(group)) {
+        throw new HttpException('No group found', httpStatus.OK);
+      }
+      return {
+        ...serviceResponseJson,
+        statusCode: httpStatus.OK,
+        status: true,
+        message: 'group retrieved successfully.',
+        data: group,
+      };
     } catch (error) {
       const statusCode =
         defaultTo(
