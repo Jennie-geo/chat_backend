@@ -29,6 +29,9 @@ export class Group {
   isDisabled: boolean;
 
   @Prop()
+  uniqueId: string;
+
+  @Prop()
   isDeleted: boolean;
 
   createdAt: Date;

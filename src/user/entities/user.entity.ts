@@ -31,6 +31,9 @@ export class User {
   isDisabled: boolean;
 
   @Prop()
+  uniqueId: string;
+
+  @Prop()
   isDeleted: boolean;
 
   @Prop()

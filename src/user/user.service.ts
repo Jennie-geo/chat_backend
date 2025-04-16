@@ -1,6 +1,5 @@
 import {
   HttpException,
-  // HttpException,
   Injectable,
   Request,
   UnauthorizedException,
@@ -19,8 +18,8 @@ export class UsersService {
 
   async updateUserInfo(updateUserDto: UpdateUserDto, @Request() req: any) {
     try {
-      const { sub: _id } = req.user;
-      const user = await this.userModel.findById(_id).select('-password');
+      const { uniqueId } = req.user;
+      const user = await this.userModel.findById(uniqueId).select('-password');
       if (isNil(user)) {
         throw new UnauthorizedException();
       }
@@ -136,9 +135,9 @@ export class UsersService {
   async updateUserStatus(auth: any, updateUserDto: UpdateUserDto) {
     try {
       console.log(auth.user);
-      const { sub: _id } = auth.user;
+      const { uniqueId } = auth.user;
       const { status } = updateUserDto;
-      const user = await this.userModel.findById(_id); //.select('-password');
+      const user = await this.userModel.findById(uniqueId); //.select('-password');
       if (isNil(user)) {
         throw new UnauthorizedException();
       }

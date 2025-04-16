@@ -1,4 +1,4 @@
-import { IsBoolean, IsObject, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsObject, IsString } from 'class-validator';
 
 export class CreateMessageDto {
   @IsString()
@@ -15,6 +15,10 @@ export class CreateMessageDto {
 
   @IsString()
   recipient: string;
+
+  @IsNotEmpty()
+  @IsString()
+  uniqueId: string;
 
   @IsString()
   isDeleted: boolean;

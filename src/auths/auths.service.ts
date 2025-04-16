@@ -16,6 +16,7 @@ import { LoginAuthDto } from './dto/login-auth.dto';
 // import { UtilsConfig } from 'src/Utils/generatePasswordToken';
 import { JwtService } from '@nestjs/jwt';
 import { jwtConstants } from './constant';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class AuthsService {
@@ -38,6 +39,7 @@ export class AuthsService {
       const user = await this.userModel.create({
         email,
         password: hashPassword,
+        uniqueId: uuidv4(),
       });
       return {
         ...serviceResponseJson,
@@ -79,7 +81,11 @@ export class AuthsService {
       if (!isPasswordValid) {
         throw new UnauthorizedException();
       }
-      const payload = { sub: user._id, email: user.email };
+      const payload = {
+        sub: user._id,
+        email: user.email,
+        uuiqueId: user.uniqueId,
+      };
 
       const accessToken = this.jwtService.sign(payload, {
         secret: jwtConstants.secret,

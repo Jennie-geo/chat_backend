@@ -1,4 +1,4 @@
-import { IsIn, IsString, Length } from 'class-validator';
+import { IsIn, IsNotEmpty, IsString, Length } from 'class-validator';
 
 export class CreateGroupDto {
   @IsString()
@@ -11,4 +11,8 @@ export class CreateGroupDto {
       'Type must either contain $constraint1 fields, but actual is $value',
   })
   type: string;
+
+  @IsString()
+  @IsNotEmpty()
+  uniqueId: string;
 }

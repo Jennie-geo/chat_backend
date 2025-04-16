@@ -14,6 +14,7 @@ import { jwtConstants } from 'src/auths/constant';
 import { Message } from 'src/messages/entities/message.entity';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { UpdateMessageDto } from 'src/messages/dto/update-message.dto';
 
 @WebSocketGateway({
   cors: {
@@ -38,6 +39,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // @ConnectedSocket() client: Socket,
   ) {
     const savedMessage = await this.messageService.createMessage(data);
+
     const { message } = savedMessage;
     if (!message) {
       console.error(' Error: Invalid message object received:', message);
@@ -46,10 +48,75 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const recipientSocketId = this.onlineUsers.get(data.recipientId);
     if (recipientSocketId) {
       console.log(
-        'this is the message that i have been wait',
+        'this is the message that i have been waiting for',
         recipientSocketId,
       );
       this.server.to(recipientSocketId).emit('new_message', message);
+    }
+  }
+
+  private getUserFromSocket(socket: Socket): { id: string } {
+    const token = socket.handshake.auth.token;
+    const payload = this.jwtService.verify(token, {
+      secret: jwtConstants.secret,
+    });
+    console.log('APAYLOAD', payload);
+    return { id: payload.sub };
+  }
+
+  @SubscribeMessage('edit_message')
+  async handleEditMessage(
+    @MessageBody() data: UpdateMessageDto,
+    @ConnectedSocket() client: Socket,
+  ) {
+    const user = this.getUserFromSocket(client);
+
+    const message = await this.messageService.editMessage(user.id, data);
+    const recipientSocketId = this.onlineUsers.get(
+      message.recipientId.toString(),
+    );
+    const senderSocketId = this.onlineUsers.get(message.senderId.toString());
+
+    const updatedMessage = message.toObject();
+    updatedMessage.edited = true;
+
+    if (recipientSocketId) {
+      this.server.to(recipientSocketId).emit('message_edited', updatedMessage);
+    }
+
+    if (senderSocketId) {
+      this.server.to(senderSocketId).emit('message_edited', updatedMessage);
+    }
+  }
+
+  @SubscribeMessage('delete_message')
+  async handleDeleteMessage(
+    @MessageBody() data: UpdateMessageDto,
+    @ConnectedSocket() client: Socket,
+  ) {
+    const user = this.getUserFromSocket(client);
+
+    const message = await this.messageService.deleteMessage(user.id, data);
+    const recipientSocketId = this.onlineUsers.get(
+      message.recipientId.toString(),
+    );
+    const senderSocketId = this.onlineUsers.get(message.senderId.toString());
+
+    const deletedMessagePayload = {
+      messageId: message._id,
+      isDeleted: true,
+    };
+
+    if (recipientSocketId) {
+      this.server
+        .to(recipientSocketId)
+        .emit('message_deleted', deletedMessagePayload);
+    }
+
+    if (senderSocketId) {
+      this.server
+        .to(senderSocketId)
+        .emit('message_deleted', deletedMessagePayload);
     }
   }
 

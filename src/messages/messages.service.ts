@@ -1,12 +1,18 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-// import { CreateMessageDto } from './dto/create-message.dto';
-import { UpdateMessageDto } from './dto/update-message.dto';
+import {
+  ForbiddenException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+
 import { Message } from './entities/message.entity';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ServiceResponseJson as serviceResponseJson } from '../Helpers/Response';
-import { defaultTo } from 'lodash';
-
+import { defaultTo, isNil } from 'lodash';
+import { UpdateMessageDto } from './dto/update-message.dto';
+import { DateTime } from 'luxon';
 @Injectable()
 export class MessagesService {
   constructor(@InjectModel('Message') private messageModel: Model<Message>) {}
@@ -94,15 +100,68 @@ export class MessagesService {
     }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} message`;
+  async editMessage(senderId: string, dto: UpdateMessageDto) {
+    const existingMessage = await this.messageModel
+      .findOne({
+        uniqueId: dto.uniqueId,
+        isDeleted: false,
+      })
+      .exec();
+
+    if (isNil(existingMessage)) {
+      throw new NotFoundException('message not found');
+    }
+    if (existingMessage.senderId.toString() !== senderId.toString()) {
+      throw new ForbiddenException('can not edit this message');
+    }
+
+    existingMessage.content = dto.content;
+    existingMessage.edited = true;
+    existingMessage.lastEdited = DateTime.now().toJSDate();
+    await existingMessage.save();
+
+    return existingMessage;
   }
 
-  update(id: number, updateMessageDto: UpdateMessageDto) {
-    return `This action updates a #${id} message`;
+  async deleteMessage(senderId: string, dto: UpdateMessageDto) {
+    const message = await this.messageModel
+      .findOne({ uniqueId: dto.uniqueId, isDeleted: false })
+      .exec();
+
+    if (isNil(message)) {
+      throw new NotFoundException('message not found');
+    }
+    if (message.senderId.toString() !== senderId.toString()) {
+      throw new ForbiddenException('can not edit this message');
+    }
+    //set deletion time phase
+    message.isDeleted = true;
+    await message.save();
+
+    return message;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} message`;
+  async recipientDeleteMessage(recipientId: string, dto: UpdateMessageDto) {
+    const message = await this.messageModel
+      .findOne({ uniqueId: dto.uniqueId, isDeleted: false })
+      .exec();
+
+    if (isNil(message)) {
+      throw new NotFoundException('message not found');
+    }
+    //set time
+    if (message.recipientId.toString() !== recipientId.toString()) {
+      throw new ForbiddenException('can not delete this message');
+    }
+    message.isDeleted = true;
+    await message.save();
+
+    return {
+      ...serviceResponseJson,
+      statusCode: HttpStatus.OK,
+      status: true,
+      message: 'message deleted successfully',
+      data: message,
+    };
   }
 }

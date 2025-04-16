@@ -8,6 +8,9 @@ export class Message {
   _id: string;
 
   @Prop()
+  uniqueId: string;
+
+  @Prop()
   content: string;
 
   @Prop()
@@ -25,14 +28,17 @@ export class Message {
   @Prop()
   isDeleted: boolean;
 
-  // @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' })
-  // comment: Comment;
+  @Prop()
+  edited: boolean;
 
   @Prop()
   isRead: boolean;
 
   @Prop({ type: mongoose.Schema.Types.Mixed })
   meta: Record<string, any>;
+
+  @Prop({ type: 'timestamp', nullable: true })
+  lastEdited: Date;
 
   createdAt: Date;
 

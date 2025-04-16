@@ -138,9 +138,10 @@ export class GroupsService {
           $search: {
             index: 'group',
             text: {
-              query: groupName,
+              query: groupName.trim(),
               path: 'name',
               fuzzy: {},
+              tokenOrder: 'sequential',
             },
           },
         },
