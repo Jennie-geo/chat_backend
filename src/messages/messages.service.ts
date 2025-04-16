@@ -13,6 +13,8 @@ import { ServiceResponseJson as serviceResponseJson } from '../Helpers/Response'
 import { defaultTo, isNil } from 'lodash';
 import { UpdateMessageDto } from './dto/update-message.dto';
 import { DateTime } from 'luxon';
+import httpStatus from 'http-status';
+
 @Injectable()
 export class MessagesService {
   constructor(@InjectModel('Message') private messageModel: Model<Message>) {}
@@ -141,27 +143,48 @@ export class MessagesService {
     return message;
   }
 
-  async recipientDeleteMessage(recipientId: string, dto: UpdateMessageDto) {
-    const message = await this.messageModel
-      .findOne({ uniqueId: dto.uniqueId, isDeleted: false })
-      .exec();
+  async recipientDeleteMessage(id: string, request: any) {
+    try {
+      const { recipientId } = request.user;
+      const message = await this.messageModel
+        .findOne({ uniqueId: id, isDeleted: false, recipientId })
+        .exec();
 
-    if (isNil(message)) {
-      throw new NotFoundException('message not found');
-    }
-    //set time
-    if (message.recipientId.toString() !== recipientId.toString()) {
-      throw new ForbiddenException('can not delete this message');
-    }
-    message.isDeleted = true;
-    await message.save();
+      if (isNil(message)) {
+        throw new NotFoundException('message not found');
+      }
+      //set time
+      if (message.recipientId.toString() !== recipientId.toString()) {
+        throw new ForbiddenException('can not delete this message');
+      }
+      message.isDeleted = true;
+      await message.save();
 
-    return {
-      ...serviceResponseJson,
-      statusCode: HttpStatus.OK,
-      status: true,
-      message: 'message deleted successfully',
-      data: message,
-    };
+      return {
+        ...serviceResponseJson,
+        statusCode: HttpStatus.OK,
+        status: true,
+        message: 'message deleted successfully',
+        data: null,
+      };
+    } catch (error) {
+      const statusCode =
+        defaultTo(
+          error?.response?.statusCode,
+          defaultTo(error?.response?.status, error?.status),
+        ) ?? httpStatus.INTERNAL_SERVER_ERROR;
+      return {
+        ...serviceResponseJson,
+        status: false,
+        statusCode:
+          statusCode === httpStatus.UNAUTHORIZED
+            ? httpStatus.BAD_REQUEST
+            : statusCode,
+        message:
+          error?.response?.data?.message ??
+          error?.message ??
+          'an error has occurred. kindly try again later.',
+      };
+    }
   }
 }
