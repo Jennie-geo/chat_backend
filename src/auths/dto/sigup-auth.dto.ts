@@ -9,8 +9,4 @@ export class CreateAuthDto {
   @IsNotEmpty()
   @Length(8, 8)
   password: string;
-
-  @IsString()
-  @IsNotEmpty()
-  uniqueId: string;
 }

@@ -31,7 +31,7 @@ export class AuthsService {
       if (existingEmail) {
         throw new HttpException(
           'User with this email already exist',
-          HttpStatus.OK,
+          HttpStatus.CONFLICT,
         );
       }
       const salt = await bcrypt.genSalt(8);
@@ -41,12 +41,14 @@ export class AuthsService {
         password: hashPassword,
         uniqueId: uuidv4(),
       });
+      const formateUser = user.toObject() as Record<string, any>;
+      delete formateUser.password;
       return {
         ...serviceResponseJson,
         statusCode: httpStatus.CREATED,
         status: true,
         message: 'User created successfully',
-        data: user,
+        data: formateUser,
       };
     } catch (error) {
       const statusCode =

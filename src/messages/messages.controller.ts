@@ -7,8 +7,6 @@ import {
   Req,
   Res,
   UseGuards,
-  // Get,
-  // Post,
 } from '@nestjs/common';
 import { MessagesService } from './messages.service';
 import { AuthGuard } from 'src/auths/auth.guard';
@@ -18,26 +16,10 @@ import {
 } from 'src/Helpers/Response';
 import { includes, toString } from 'lodash';
 import { Response } from 'express';
-// import { CreateMessageDto } from './dto/create-message.dto';
 
 @Controller('messages')
 export class MessagesController {
   constructor(private readonly messagesService: MessagesService) {}
-
-  // @Post()
-  // create(@Body() createMessageDto: CreateMessageDto) {
-  //   return this.messagesService.createMessage(createMessageDto);
-  // }
-
-  // @Get()
-  // findAll() {
-  //   return this.messagesService.findAll();
-  // }
-
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.messagesService.findOneAndUpdate(+id);
-  // }
   @UseGuards(AuthGuard)
   @Delete(':id')
   async deleteMessage(

@@ -49,12 +49,12 @@ export class ChannelsController {
   @UseGuards(AuthGuard)
   @Post(':_id')
   async addGroupMember(
-    @Param('_id') _id: string,
+    @Param('id') id: string,
     @Req() request: RawBodyRequest<Request>,
     @Res() response: Response,
   ) {
     const { status, message, statusCode, data } =
-      await this.groupsService.addGroupMember(_id, request);
+      await this.groupsService.addGroupMember(id, request);
 
     if (includes(ServiceResponseStatusErrorArray, toString(status))) {
       throw new HttpException(message, statusCode);
@@ -69,10 +69,15 @@ export class ChannelsController {
   }
 
   @UseGuards(AuthGuard)
-  @Get(':_id')
-  async groupMembers(@Param('_id') _id: string, @Res() response: Response) {
+  @Get(':id')
+  async groupMembers(
+    @Param('id') id: string,
+    @Req() request: Request,
+    @Res() response: Response,
+  ) {
+    console.log('helllll', id);
     const { status, message, statusCode, data } =
-      await this.groupsService.retrieveGroupMembers(_id);
+      await this.groupsService.retrieveGroupMembers(id, request);
 
     if (includes(ServiceResponseStatusErrorArray, toString(status))) {
       throw new HttpException(message, statusCode);

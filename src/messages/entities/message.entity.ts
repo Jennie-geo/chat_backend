@@ -37,7 +37,7 @@ export class Message {
   @Prop({ type: mongoose.Schema.Types.Mixed })
   meta: Record<string, any>;
 
-  @Prop({ type: 'timestamp', nullable: true })
+  @Prop({ type: Date, nullable: true })
   lastEdited: Date;
 
   createdAt: Date;

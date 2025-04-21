@@ -6,7 +6,7 @@ import { ServiceResponseJson as serviceResponseJson } from '../Helpers/Response'
 import { Group } from 'src/group/entities/group.entity';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-// import { Request } from 'express';
+import { v4 as uuidv4 } from 'uuid';
 import { User } from 'src/user/entities/user.entity';
 @Injectable()
 export class GroupsService {
@@ -15,16 +15,22 @@ export class GroupsService {
     @InjectModel('User') private readonly userModel: Model<User>,
   ) {}
   async createGroup(createGroupDto: CreateGroupDto, request: any) {
+    console.log('request. user', request.user);
     try {
-      const { sub: user_id } = request.user;
+      const { uuiqueId } = request.user;
       const { name, type } = createGroupDto;
+      const groupExist = await this.groupModel.findOne({ name });
+      if (!isNil(groupExist)) {
+        throw new HttpException('goup name already exist', httpStatus.CONFLICT);
+      }
       await this.groupModel.create({
         name,
         type,
-        createdBy: user_id,
+        createdBy: uuiqueId,
         isActive: true,
         isDeleted: false,
         isDisabled: false,
+        uniqueId: uuidv4(),
       });
       return {
         ...serviceResponseJson,
@@ -54,14 +60,16 @@ export class GroupsService {
     }
   }
 
-  async addGroupMember(_id: string, raw: any): Promise<any> {
+  async addGroupMember(uniqueId: string, request: any): Promise<any> {
     try {
-      const { id } = raw.body;
+      const { id } = request.body;
       const user = await this.userModel.findById({ _id: id }).exec();
       if (isNil(user)) {
         throw new HttpException('user does not exist', httpStatus.BAD_REQUEST);
       }
-      const group = await this.groupModel.findById(_id).exec();
+      const group = await this.groupModel
+        .findOne({ uniqueId, createdBy: request.user.uuiqueId })
+        .exec();
       if (isNil(group)) {
         throw new HttpException('group not found', httpStatus.BAD_REQUEST);
       }
@@ -95,11 +103,23 @@ export class GroupsService {
     }
   }
 
-  async retrieveGroupMembers(_id: string) {
+  async retrieveGroupMembers(uniqueId: string, request: any): Promise<any> {
     try {
-      const group = await this.groupModel.findById(_id).exec();
+      console.log('Unique id', request.user.sub);
+      const group = await this.groupModel.findOne({ uniqueId });
       if (isNil(group)) {
         throw new HttpException('group not found', httpStatus.BAD_REQUEST);
+      }
+      const isMember = group.members.includes(
+        request.user.uuiqueId || request.user.id,
+      );
+      console.log('isMember', isMember, request.user.sub);
+
+      if (!isMember) {
+        throw new HttpException(
+          'you must be in the group to view members',
+          httpStatus.FORBIDDEN,
+        );
       }
       return {
         ...serviceResponseJson,
